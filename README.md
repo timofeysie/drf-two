@@ -187,42 +187,10 @@ pip freeze > requirements.txt
 
 ## Rest Framework Serializers
 
-Currently when running the server, there are no REST API endpoints:
-
-```shell
-PS C:\Users\timof\repos\django\drf-api> python manage.py runserver
-Watching for file changes with StatReloader
-Performing system checks...
-
-System check identified no issues (0 silenced).
-December 02, 2023 - 11:19:46
-Django version 3.2, using settings 'drf_api.settings'
-Starting development server at http://127.0.0.1:8000/
-Quit the server with CTRL-BREAK.
-Not Found: /profiles
-[02/Dec/2023 11:20:00] "GET /profiles HTTP/1.1" 404 1987
-Not Found: /favicon.ico
-[02/Dec/2023 11:20:00] "GET /favicon.ico HTTP/1.1" 404 1996
-Not Found: /profiles/
-[02/Dec/2023 11:21:30] "GET /profiles/ HTTP/1.1" 404 1990
-```
-
 ### Install the the Django REST Framework
 
 ```shell
 pip install djangorestframework
-Collecting djangorestframework
-  Downloading djangorestframework-3.14.0-py3-none-any.whl (1.1 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 11.2 MB/s eta 0:00:00
-Requirement already satisfied: pytz in c:\users\timof\appdata\local\programs\python\python310\lib\site-packages (from djangorestframework) (2023.3.post1)
-Requirement already satisfied: django>=3.0 in c:\users\timof\appdata\local\programs\python\python310\lib\site-packages (from djangorestframework) (3.2)
-Requirement already satisfied: sqlparse>=0.2.2 in c:\users\timof\appdata\local\programs\python\python310\lib\site-packages (from django>=3.0->djangorestframework) (0.4.4)
-Requirement already satisfied: asgiref<4,>=3.3.2 in c:\users\timof\appdata\local\programs\python\python310\lib\site-packages (from django>=3.0->djangorestframework) (3.7.2)
-Requirement already satisfied: typing-extensions>=4 in c:\users\timof\appdata\local\programs\python\python310\lib\site-packages (from asgiref<4,>=3.3.2->django>=3.0->djangorestframework) (4.8.0)
-Installing collected packages: djangorestframework
-Successfully installed djangorestframework-3.14.0
-[notice] A new release of pip is available: 23.0.1 -> 23.3.1
-[notice] To update, run: python.exe -m pip install --upgrade pip
 ```
 
 Add it after cloudinary at the bottom of the installed apps array in settings.py:
@@ -239,9 +207,11 @@ INSTALLED_APPS = [
 
 ### Import the APIView and Response classes in views.py
 
-APIView is very similar to Django’s View  class. It also provides a few bits of extra  
-functionality such as making sure you  receive Request instances in your view,  
-handling parsing errors, and adding  context to Response objects.
+Find the code for this step [here](https://github.com/Code-Institute-Solutions/drf-api/tree/e3c785ad9f0dfaae57766e948b722f0db49ef4dd).
+
+ProfileList will extend APIView similar to Django's View class.
+
+It also provides a few bits of extra functionality such as making sure to receive a Request instances in the view, handling parsing errors, and adding context to Response objects.
 
 Create the ProfileList view and define the get method.
 
@@ -260,11 +230,7 @@ class ProfileList(APIView):
 
 ### Create profile urls
 
-create a urls.py file. Inside, we’ll  import Django’s ‘path’ and views from profiles.
-We have just one view, hence just one url pattern.  
-ProfileList is a class view, so  remember to call as_view on it.
-
-profiles\urls.py
+Create a urls.py file with the profiles path.
 
 ```py
 from django.urls import path
@@ -275,7 +241,7 @@ urlpatterns = [
 ]
 ```
 
-include profile urls in  our main app
+Include profile urls in the main apps urls.py
 
 drf_api\urls.py
 
@@ -289,26 +255,15 @@ urlpatterns = [
 ]
 ```
 
-Currently if you start the server and go to ‘profiles/’ we will see the error: Object of type Profile is not JSON serializable.
-
-When a user posts data to an API, the following has to happen:
-
-- data is deserialized (converted from a data format like JSON or  XML to Python native data types)
-- validated
-- the model instance is saved in the database
-- a queryset or model instance  is returned from the database
-- it is converted again, or serialized to a JSON
-
-The error indicates we need a serializer to convert Django model instances to JSON
+Currently if you start the server and go to 'http://127.0.0.1:8000/profiles/' there is an error: Object of type Profile is not JSON serializable which is fixed with a serializer.
 
 ### Create the serializer
 
 Creating serializers.py, import serializers from  rest framework and our Profile model.
 
-Specify ‘owner’ as a ReadOnlyField and populate it with the owner's username.
+Specify 'owner' as a ReadOnlyField and populate it with the owner's username.
 
-In the Meta class, we’ll point to our Profile model and specify the fields we’d like to  
-include in the response.
+In the Meta class point to the Profile model and specify the fields we want in the response.
 
 profiles\serializers.py
 
@@ -321,6 +276,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
+        # to list all fields all in an array or set to '__all__'  
         fields = [
             'id', 'owner', 'created_at', 'updated_at', 'name',
             'content', 'image',
@@ -331,8 +287,8 @@ When extending Django's model class using models.models, the id field is created
 
 ### Add the serializer to our views.py file
 
-Import the ProfileSerializer, create a ProfileSerializer instance and pass in profiles and many equals True to specify we’re serializing multiple Profile instances.
-In the Response send data returned from our serializer.
+Import the ProfileSerializer, create a ProfileSerializer instance and pass in profiles and many equals True to specify serializing multiple Profile instances.
+In the Response send data returned from the serializer.
 
 profiles\views.py
 
@@ -347,9 +303,9 @@ class ProfileList(APIView):
         return Response(serializer.data)
 ```
 
-Now with the server running refresh the preview window and the JSON user list is returned.
+Now the JSON user list is returned.
 
-Time to update dependencies, git add, commit and push all the changes to GitHub.
+Update dependencies, git add, commit and push all the changes to GitHub.
 
 ## Populating Serializer ReadOnly Field using dot notation
 
