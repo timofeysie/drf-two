@@ -158,7 +158,7 @@ from .models import Profile
 admin.site.register(Profile)
 ```
 
-Then run make migrations whihc you have to do after updating a model:
+Then run make migrations which you have to do after updating a model:
 
 ```shell
 python manage.py makemigrations
@@ -327,15 +327,15 @@ class Profile(models.Model):
 
 By default, the owner field always returns the user’s id value.
 
-To make this clear we can overwrite the default behavior to return username instead using ```owner.username```
+To make this clear overwrite the default behavior to return username instead using ```owner.username```
 
-How you would access the profile name field if you were working in the Post serializer?
+To access the profile name field a Post serializer like this:
 
 ```py
 profile_name = serializers.ReadOnlyField(source='owner.profile.name')
 ```
 
-To add the profile image field to each post, we need to access a sub-attribute, so it would look like this:
+To add the profile image field to each post, access a sub-attribute, so it would look like this:
 
 ```py
 profile_image = serializers.ReadOnlyField(source='owner.profile.image.url')
