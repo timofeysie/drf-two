@@ -484,8 +484,6 @@ Now a proper form appears.
 
 ## Authentication & permissions
 
-The video for this seciont is [here](https://learn.codeinstitute.net/courses/course-v1:CodeInstitute+DRF+2021_T1/courseware/b50f474f85af4de69944fa15a1342abd/9e0bea8f758944059ede7f1fc5ac694a/?child=last).
-
 Here is [the repo for this part](https://github.com/Code-Institute-Solutions/drf-api/tree/025406b0a0fb365a1931747b596c33fd3ba2a6dc).
 
 Just adding this to: drf_api\urls.py automagically adds a login button in the framework webpage view.
@@ -519,14 +517,16 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 Next connect to the ProfileDetail view in profiles\views.py:
 
 ```py
+from drf_two.permissions import IsOwnerOrReadOnly # <-- note this has to be the name of the app, which is not drf_api
+
 class ProfileDetail(APIView):
     serializer_class = ProfileSerializer
-    permission_classes = [IsOwnerOrReadOnly] <--
+    permission_classes = [IsOwnerOrReadOnly] # <--
 
     def get_object(self, pk):
         try:
             profile = Profile.objects.get(pk=pk)
-            self.check_object_permissions(self.request, profile) <--
+            self.check_object_permissions(self.request, profile) # <--
             return profile
         except Profile.DoesNotExist:
             raise Http404
