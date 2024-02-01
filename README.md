@@ -587,24 +587,44 @@ Now the profiles API returns the field:
 ]
 ```
 
-## Further work
+## The Post module
 
-I wont be doing all the exercises and additional modules at this time.  Here is a review of what happens next without any code being added.
-
-### Post Serializer Challenge & Adding the Image_Filters
+### Post Serializer Challenge & Adding the Image_Filters & PostList
 
 The Post-Serializer Challenge to create a serializer for a new model.
-Then add an image filter to users uploaded images.
 
-This repo is just to get the basics of the rest framework, not a comprehensive run-though of the whole course.
+- python manage.py startapp posts
+- create the serializers.py file in the posts folder.
+- update the posts\models.py file
 
-### Post module
+Then migrate the new model:
+
+```sh
+python manage.py makemigrations
+python manage.py migrate
+```
+
+Then add an image filter to users uploaded images and validation in the posts/serializers.py.
+
+The [code for this step is here](https://github.com/Code-Institute-Solutions/drf-api).
+
+PostList view get function [code](https://github.com/Code-Institute-Solutions/drf-api/tree/02800dbad36d6f5976853975fd4aa3a302e23a0a) is very similar to the ProfileList view.
 
 The API for listing, retrieving and updating posts will is similar to the profile views but also includes post creation and deletion.
 
-I guess it would include scaffolding like this: ```python manage.py startapp posts``` then adding urls.py.
+Include scaffolding like this: ```python manage.py startapp posts``` then adding urls.py.
 
-## JWT
+User story: A user who is not logged in should not be able to create a post.
+
+### Post images validation
+
+- Image size larger than 2MB
+- Image height larger than 4096px
+- Image width larger than 4096px
+
+Next, the PostDetail view.
+
+## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
 
