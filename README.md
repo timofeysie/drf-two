@@ -679,6 +679,90 @@ urlpatterns = [
 ]
 ```
 
+## Comments & CommentDetail Serializer Challenge
+
+Create a serializer for a new Comments model.
+
+1. create the comments app: ```python manage.py startapp comments```
+2. create the comments/serializers.py file with two serializers
+3. create the comments model
+4. migrate it into the Db
+5. add 'comments', to the installed apps
+
+Step 3 again to migrate the new model:
+
+```sh
+python manage.py makemigrations
+python manage.py migrate
+```
+
+Here is the [code](https://github.com/Code-Institute-Solutions/drf-api/tree/3748ed4d93b45dcabdbf0b29b95be27ad644fe2d) for this step.
+
+### CommentList and CommentDetail generic views
+
+User story: Users will be able to retrieve, update and delete a comment by id.
+
+Since this is the same functionality as the posts it would be a lot of repetition in the code.
+
+We only have to swap the Post model and serializer for its Comment counterparts.
+
+comments\views.py
+
+```py
+class CommentList(generics.ListCreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Comment.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+```
+
+Compare that to posts\views.py:
+
+```py
+class PostList(APIView):
+    serializer_class = PostSerializer
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly
+    ]
+
+    def get(self, request):
+        posts = Post.objects.all()
+        serializer = PostSerializer(
+            posts, many=True, context={'request': request}
+        )
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = PostSerializer(
+            data=request.data, context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save(owner=request.user)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
+```
+
+As you can see, it's a lot leaner. [Django generic views](https://www.django-rest-framework.org/api-guide/generic-views/#attributes/) are a shortcut for common usage patterns.
+
+Instead of specifying the model set the queryset attribute.
+
+The request is a part of the context object by default and doesn't have to be passed manually as in the regular class based views.
+
+Create comments/urls.py with similar functionality as the other endpoints:
+
+```py
+urlpatterns = [
+    path('comments/', views.CommentList.as_view()),
+    path('comments/<int:pk>/', views.CommentDetail.as_view())
+]
+```  
+
 ## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
