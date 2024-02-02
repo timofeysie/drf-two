@@ -804,6 +804,15 @@ Follower Model, serializers and generic views.
 
 The [solution Code](https://github.com/Code-Institute-Solutions/drf-api/blob/a52eb3634a052033c8bf575a48b3d588c28da8a6/drf_api/urls.py).
 
+https://github.com/Code-Institute-Solutions/drf-api/blob/23b93337ab45903140ea01232474e9fbcad4f015/profiles/views.py
+
+## Refactoring Post and Profile Views
+
+Refactor the Profiles views to use Generic Views.
+
+We can refactor the Post views to use Generic Views later:
+the [Post Views Refactor Source Code](https://github.com/Code-Institute-Solutions/drf-api/blob/23b93337ab45903140ea01232474e9fbcad4f015/posts/views.py).
+
 ## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
