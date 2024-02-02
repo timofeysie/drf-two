@@ -790,6 +790,20 @@ To catch this we do the following:
 
 The [code for this step](https://github.com/Code-Institute-Solutions/drf-api/blob/c3ba26abf5038edc1c26197775d1c09bae9f67cc/drf_api/urls.py).
 
+## Followers
+
+Follower Model, serializers and generic views.
+
+- create the followers app: ```python manage.py startapp followers```
+- register the app in INSTALLED APP in settings.py
+- make and run your migrations
+- create the serializers.py file in the followers folder
+- add the model code
+- create a new followers/urls.py file
+- In urls/urls.py add the url patterns path('', include('followers.urls')),
+
+The [solution Code](https://github.com/Code-Institute-Solutions/drf-api/blob/a52eb3634a052033c8bf575a48b3d588c28da8a6/drf_api/urls.py).
+
 ## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
