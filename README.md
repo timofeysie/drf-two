@@ -761,7 +761,34 @@ urlpatterns = [
     path('comments/', views.CommentList.as_view()),
     path('comments/<int:pk>/', views.CommentDetail.as_view())
 ]
-```  
+```
+
+## The likes app, serializer & generic views
+
+- create the likes app: ```python manage.py startapp likes```
+- add the model for likes
+- migrate the model
+- register the app as an INSTALLED APP in settings.py
+- create the create the serializers.py
+- add path('', include('likes.urls')), to the drf_two/urls.py file
+
+The [solution code](https://github.com/Code-Institute-Solutions/drf-api/tree/d5b167df08db8ef479633393334783af2821f364).
+
+If you like the same post twice you will get an IntegrityError.  
+
+To catch this we do the following:
+
+```py
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError({
+                'detail': 'possible duplicate'
+            })
+```
+
+The [code for this step](https://github.com/Code-Institute-Solutions/drf-api/blob/c3ba26abf5038edc1c26197775d1c09bae9f67cc/drf_api/urls.py).
 
 ## JWT (legacy from the der-api repo)
 
