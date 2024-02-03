@@ -813,6 +813,150 @@ Refactor the Profiles views to use Generic Views.
 We can refactor the Post views to use Generic Views later:
 the [Post Views Refactor Source Code](https://github.com/Code-Institute-Solutions/drf-api/blob/23b93337ab45903140ea01232474e9fbcad4f015/posts/views.py).
 
+## Adding extra fields to Posts and Profiles
+
+### Following and liking
+
+Here we create two  extra SerializerMethodFields for the Profile and PostSerializer.
+
+User story:  If the logged in user is not following a profile, the following_id says null.
+
+User story: If a user is logged in and follows a profile, the following_id field has their id.
+
+So the following_id field in the /profiles list should match the id in the /followers list.
+
+When a user un-follows them, we know which Follower instance to delete and the following_id will go back to null.
+
+User story: A logged out users can't follow a profile.
+
+For this functionality we add following_id to the ProfileSerializer
+
+Similar to this we want to add the like_id to the posts SerializerMethodField
+
+The [source code](https://github.com/Code-Institute-Solutions/drf-api/blob/6095fae29d4a24d87f9a2ff6dfe4a36f122f5d67/posts/serializers.py) for this section.
+
+### Sorting
+
+Next we add sortable fields to Profiles and Posts using the annotate method  
+on ProfileList and PostList view querysets.
+
+The finished moments app makes this api/profiles/?ordering=-followers_count GET with result objects like this:
+
+```json
+{
+    "id": 1,
+    "owner": "sean",
+    "created_at": "11 Oct 2022",
+    "updated_at": "23 Jan 2023",
+    "name": "",
+    "content": "",
+    "image": "https://res.cloudinary.com/nazarja/image/upload/v1/media/images/default_profile_qdjgyp_rzjy8m",
+    "is_owner": false,
+    "following_id": 1,
+    "posts_count": 2,
+    "followers_count": 1,
+    "following_count": 0
+}
+```
+
+Here is where we add the last three fields and order profiles by fields in an ascending and descending order.
+
+In profiles/views.py before we just did this:
+
+```py
+queryset = Profile.objects.all()
+```
+
+Now, it will look like this:
+
+```py
+    queryset = Profile.objects.annotate(
+        posts_count=Count('owner__post', distinct=True),
+        followers_count=Count('owner__followed', distinct=True),
+        following_count=Count('owner__following', distinct=True)
+    ).order_by('-created_at')
+    serializer_class = ProfileSerializer
+    filter_backends = [
+        filters.OrderingFilter
+    ]
+    ordering_fields = [
+        'posts_count',
+        'followers_count',
+        'following_count',
+        'owner__following__created_at',
+        'owner__followed__created_at',
+    ]
+```
+
+That's a lot of cheddar.
+
+For the posts count, since there is no direct relationship between Profile and Post so go through the User model to connect them.
+
+For the followers/following Within we have two foreign keys that are referencing the User model:
+
+1. the User following another user (owner following)
+2. the one being followed (followed)
+
+I understand what "owner__followed" is doing in the followers_count.  I see how it goes from the owner in the Profile table through the User table to the followed field in the Follower table.  It's via the foreign key, so that makes sense.  But the second one ```following_count=Count('owner__following', distinct=True)``` is a bit harder to reason about.
+
+It goes from the User via the owner field and then reference the "following" field which I thought was called "owner" but is referred to as the "related_name",  
+
+It would help to look at these table definitions.
+
+#### profiles
+
+```py
+owner = models.OneToOneField(User, on_delete=models.CASCADE)
+created_at = models.DateTimeField(auto_now_add=True)
+updated_at = models.DateTimeField(auto_now=True)
+name = models.CharField(max_length=255, blank=True)
+content = models.TextField(blank=True)
+image = models.ImageField(upload_to='images/', default='...')
+```
+
+#### user
+
+```py
+from django.contrib.auth.models import User
+```
+
+#### follower
+
+```py
+owner = models.ForeignKey(User, related_name='following', on_delete=models.CASCADE)
+followed = models.ForeignKey(User, related_name='followed', on_delete=models.CASCADE)
+created_at = models.DateTimeField(auto_now_add=True)
+```
+
+OK, I see.  It makes it clear with the related_name field.  Now that makes sense.
+
+This is why I take these notes.  It helps to explain it to myself so that I can get clear about it.  Just watching a video or reading it fades away fast.  Notes stay behind and if I forget again, I just read the notes.
+
+These fields are also added as ReadOnly fields to the Profile Serializer:
+
+```py
+class ProfileSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
+    is_owner = serializers.SerializerMethodField()
+    following_id = serializers.SerializerMethodField()
+    posts_count = serializers.ReadOnlyField()
+    followers_count = serializers.ReadOnlyField()
+    following_count = serializers.ReadOnlyField()
+```
+
+Also the fields array at the bottom of that file as well as be added to the profiles/views.py detail view.  Neat.
+
+### Extra fields for the post
+
+Next add two new fields for a retrieved posts queryset:
+
+- comments_count
+- likes_count
+
+Also add these fields to the fields list in posts/serializer.py.
+
+The [code for this step](https://github.com/Code-Institute-Solutions/drf-api/blob/a7033eacc714c79df49679fbebd455e300e09d95/posts/serializers.py).
+
 ## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
