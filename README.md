@@ -957,6 +957,82 @@ Also add these fields to the fields list in posts/serializer.py.
 
 The [code for this step](https://github.com/Code-Institute-Solutions/drf-api/blob/a7033eacc714c79df49679fbebd455e300e09d95/posts/serializers.py).
 
+## Searching & Filtering
+
+### Search
+
+User story: As a user I want to search posts by either the title or the author’s name.
+
+Django makes it easy.  It's as simple as this:
+
+```py
+class PostList(generics.ListCreateAPIView):
+    ...
+    search_fields = [
+        'owner__username',
+        'title',
+    ]
+```
+
+There will automatically be a search field in the admin view now.
+
+### Filtering the feed
+
+Adding the filter feature to our API
+
+User story: As a user I want to show posts that are owned by users that a particular user is following, liked by a particular user, and owned by a particular user.
+
+First run this and and add it to INSTALLED_APPS in settings.py.
+
+```sh
+pip install django-filter
+```
+
+After installing a library and its working, we update dependencies file:
+
+```sh
+pip freeze > requirements.txt
+```
+
+To get the user post feed by their profile id we follow these steps:
+
+- find out who owns each post in the database
+- see if a post owner is being followed by a suer
+- point to the users profile to use its id to filter the results
+
+For example, user John.  We get his instance in the User table to find out if anyone is following him.
+We refer to the related name "followed" in the followers table.
+Ronan is following John, so we return his profile_id by first using the owner field to relate back to User, and then the profile.  
+
+It's similar for the liked posts. When we pass in Ronan's profile id, we should see all the posts that he liked.
+
+The result is an array in the posts/views.py file like this:
+
+```py
+filterset_fields = [
+    # user feed
+    'owner__followed__owner__profile',
+    # user liked posts
+    'likes__owner__profile',
+    # user posts
+    'owner__profile',
+]
+```
+
+And the profile filter for user profiles that follow a user with a given profile_id in profiles/views.py looks like this:
+
+```py
+filterset_fields = [
+    'owner__following__followed__profile',
+    # in order to get all the profiles followed by a users
+    'owner__followed__owner__profile',
+]
+```
+
+In the comments/views.py file, it's a lot easier.
+
+In order to to get all the comments associated with a given post, we only need posts.
+
 ## JWT (legacy from the der-api repo)
 
 I have bunched the changes for installing and configuring JWTs in this section.
