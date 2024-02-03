@@ -1157,13 +1157,54 @@ python manage.py migrate
 ModuleNotFoundError: No module named 'allauth'
 ```
 
-For some reason there is no transcript on this video, so I can't search for allauth in that.
+Trying to install that and I get this on migrate:
 
-The lib is shown in the [GitHub repo linked to](https://github.com/Code-Institute-Solutions/drf-api/tree/c637122d1a559139cabf1d39b0a3281814091d79).
+```sh
+ImportError: allauth needs to be added to INSTALLED_APPS.
+```
 
-'allauth' is shown in the settings.py after running this command: pip install 'dj-rest-auth[with-social]'
+A [StackOverflow answer](https://stackoverflow.com/questions/76969410/importerror-allauth-needs-to-be-added-to-installed-apps) says to use this version:
 
-In docs linked to, it says:
+```sh
+pip install django-allauth==0.54.0
+```
+
+Then I see this error when running the server:
+
+```sh
+PS C:\Users\timof\repos\timo\drf-two> python manage.py runserver             
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 03, 2024 - 15:45:08
+Django version 3.2, using settings 'drf_two.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+Exception in thread django-main-thread:
+Traceback (most recent call last):
+...
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'allauth.account.middleware'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  ...
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\servers\basehttp.py", line 47, in get_internal_wsgi_application
+    raise ImproperlyConfigured(
+django.core.exceptions.ImproperlyConfigured: WSGI application 'drf_two.wsgi.application' could not be loaded; Error importing module.
+```
+
+I panicked for a second and thought my name was the issue: 'drf_two' and not 'drf_api', but I searched for the first error *No module named 'allauth.account.middleware'* and found this [StackOverlow](https://stackoverflow.com/questions/77012106/django-allauth-modulenotfounderror-no-module-named-allauth-account-middlewar) which solved the action and we are back in business.  Take that ChatGPT!
+
+Lastly, update the deps:
+
+```sh
+pip freeze > requirements.txt
+```
 
 ### Registration (optional)
 
