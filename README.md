@@ -1033,7 +1033,7 @@ In the comments/views.py file, it's a lot easier.
 
 In order to to get all the comments associated with a given post, we only need posts.
 
-## JWT (legacy from the der-api repo)
+## JWTs
 
 I have bunched the changes for installing and configuring JWTs in this section.
 
@@ -1041,11 +1041,26 @@ Instead of the command pip3 install dj-rest-auth, use dj-rest-auth==2.1.9:
 
 ```shell
 pip3 install dj-rest-auth==2.1.9
+```
+
+It's using pip3.  We have used pip all along so far.  Is this what caused the problem with all auth last time?
+
+```sh
+python manage.py migrate
+python manage.py makemigrations
+```
+
+```sh
 pip install 'dj-rest-auth[with-social]'
+...
+WARNING: dj-rest-auth 2.1.9 does not provide the extra 'with-social'
+```
+
+```sh
 pip install djangorestframework-simplejwt
 ```
 
-Much of this section is following [the installation instructions](https://dj-rest-auth.readthedocs.io/en/latest/installation.html) for dj-rest-auth.  JWTs allow the server to be stateless, which is a big part of a rest framework.
+Much of this section is following [the installation instructions](https://dj-rest-auth.readthedocs.io/en/latest/installation.html) for dj-rest-auth.  JWTs allow the server to be stateless, which is a big part of a REST framework.
 
 ```py
 INSTALLED_APPS = [
@@ -1072,7 +1087,51 @@ urlpatterns = [
 ]
 ```
 
-Create drf_api/serializers.py
+Out-of-the-box, we need to use  session authentication in development.
+
+And for Production we’ll use Tokens.
+
+This will allow us to continue to be able to  log into our API as we work on it.
+
+To make this distinction, I’ll set  ```os.environ['DEV'] = '1'``` in the env.py file.
+
+Next, we can use this value to check whether we’re in Development or Production,  
+and authenticate using sessions  or tokens respectively.
+To enable token authentication, we’ll  also have to set REST_USE_JWT to True.  
+To make sure they’re sent over HTTPS only,  we will set JWT_AUTH_SECURE to True as well.
+We also need to declare the cookie names for the  access and refresh tokens, as we’ll be using both.
+
+The problem with allauth start again.
+
+```sh
+$ python manage.py migrate
+Traceback (most recent call last):
+  File "C:\Users\timof\repos\timo\drf-two\manage.py", line 22, in <module>
+    main()
+  File "C:\Users\timof\repos\timo\drf-two\manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\management\__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\management\__init__.py", line 395, in execute
+    django.setup()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\apps\registry.py", line 122, in populate
+    app_config.ready()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\allauth\account\apps.py", line 17, in ready
+    raise ImproperlyConfigured(
+django.core.exceptions.ImproperlyConfigured: allauth.account.middleware.AccountMiddleware must be added to settings.MIDDLEWARE
+```
+
+OK, OK, I will add that.  It's not in the [official source](https://github.com/Code-Institute-Solutions/drf-api/blob/c637122d1a559139cabf1d39b0a3281814091d79/drf_api/settings.py) but have to sort this out.  Its a few years old.
+
+Next issue:
+
+```sh
+ModuleNotFoundError: No module named 'drf_two.serializers'
+```
+
+Create drf_two/serializers.py
 
 Paste the code from the docs:
 
