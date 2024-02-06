@@ -1033,6 +1033,24 @@ In the comments/views.py file, it's a lot easier.
 
 In order to to get all the comments associated with a given post, we only need posts.
 
+## a note on pip vs pip3
+
+It's using pip3.  We have used pip all along so far.  Is this what caused the problem with all auth last time?
+
+Your pip is a soft link to the same executable file path with pip3. you can use the commands below to check where your pip and pip3 real paths are:
+
+```sh
+$ ls -l `which pip`
+$ ls -l `which pip3`
+```
+
+You may also use the commands below to know more details:
+
+```sh
+$ pip show pip
+$ pip3 show pip
+```
+
 ## JWTs
 
 I have bunched the changes for installing and configuring JWTs in this section.
@@ -1042,8 +1060,6 @@ Instead of the command pip3 install dj-rest-auth, use dj-rest-auth==2.1.9:
 ```shell
 pip3 install dj-rest-auth==2.1.9
 ```
-
-It's using pip3.  We have used pip all along so far.  Is this what caused the problem with all auth last time?
 
 ```sh
 python manage.py migrate
@@ -1087,19 +1103,17 @@ urlpatterns = [
 ]
 ```
 
-Out-of-the-box, we need to use  session authentication in development.
+We will still use session authentication in development and for Production use Tokens.
 
-And for Production we’ll use Tokens.
+To make this distinction, set  ```os.environ['DEV'] = '1'``` in the env.py file.
 
-This will allow us to continue to be able to  log into our API as we work on it.
+Next, use this value to check whether we’re in Development or Production, and authenticate using sessions or tokens respectively.
 
-To make this distinction, I’ll set  ```os.environ['DEV'] = '1'``` in the env.py file.
+To enable token authentication, set REST_USE_JWT to True.
 
-Next, we can use this value to check whether we’re in Development or Production,  
-and authenticate using sessions  or tokens respectively.
-To enable token authentication, we’ll  also have to set REST_USE_JWT to True.  
-To make sure they’re sent over HTTPS only,  we will set JWT_AUTH_SECURE to True as well.
-We also need to declare the cookie names for the  access and refresh tokens, as we’ll be using both.
+To make sure they’re sent over HTTPS only set JWT_AUTH_SECURE to True.
+
+Declare the cookie names for the access and refresh tokens since we both.
 
 ## The problem with allauth again
 
@@ -1244,13 +1258,28 @@ Region: AP-NorthEast-1 (Tokyo)
 
 The process to create a new app on Heroku is documented on their site.
 
-- Log into Heroku and go to the Dashboard
-- On the Heroku dashboard Click “New” a button with new and an expansion icon
-- Click “Create new app” a drop down menu with an option to create a new app
-- Give your app a name and select the region closest to you.
-- Open the Settings tab the settings tab selected on a heroku app
-- Add a Config Var DATABASE_URL, and for the value, copy in your database URL from ElephantSQL (do not add quotation marks)
-- Heroku config var with DATABASE_URL as the key and an elephant sql database url as the value
+- log into the Heroku Dashboard
+- click "New" and "Create new app"
+- name the app and select the region
+- in Settings tab add a Config Var DATABASE_URL with the database URL from ElephantSQL value
+
+When trying to add a Config Var DATABASE_URL in Heroku with the value of my database URL from ElephantSQL, I got this error: *item could not be updated: Unknown error*
+
+In the console I saw this:
+
+```txt
+state-machine.js:24 
+       GET https://kolkrabbi.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/github 404 
+Access to XMLHttpRequest at 'https://api.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/config-vars' from origin 'https://dashboard.heroku.com' has been blocked by CORS policy: Method PATCH is not allowed by Access-Control-Allow-Methods in preflight response.
+state-machine.js:24             
+   PATCH https://api.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/config-vars net::ERR_FAILED
+(anonymous) @ state-machine.js:24
+g @ chunk.5.9f71834c517a7a7113bd.js:96
+scheduleTask @ chunk.5.9f71834c517a7a7113bd.js:13
+…
+```
+
+Searching in the Heroku docs for that error, I saw a recommendation to clear the browser cache, use incognito mode or use a different browser.  So I fired up Edge and that worked to set the config variable.
 
 ### Project preparation for your IDE
 
@@ -1267,13 +1296,130 @@ import os
 import dj_database_url
 ```
 
+Currently, in the settings.py file we have this:
 
-### confirm that the data in your database on ElephantSQL has been created.
+```py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+```
+
+Step 3: The instructions say to update the "database section" to this:
+
+```py
+ if 'DEV' in os.environ:
+     DATABASES = {
+         'default': {
+             'ENGINE': 'django.db.backends.sqlite3',
+             'NAME': BASE_DIR / 'db.sqlite3',
+         }
+     }
+ else:
+     DATABASES = {
+         'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
+     }
+```
+
+To confirm this location I looked at [the complete moments source code](https://github.com/Code-Institute-Solutions/drf-api/blob/master/drf_api/settings.py) and saw this:
+
+```py
+DATABASES = {
+    'default': ({
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    } if 'DEV' in os.environ else dj_database_url.parse(
+        os.environ.get('DATABASE_URL')
+    ))
+}
+```
+
+So I'm not sure why those are different.
+
+Moving on, add the Db url to the env.py file:
+
+```py
+os.environ['DATABASE_URL'] = "<your PostgreSQL URL here>"
+```
+
+Step 5: *Temporarily comment out the DEV environment variable so that your IDE can connect to your external database*
+
+That's also in the env.py file, although this detail is left out.
+
+Step 7: In the terminal, -–dry-run your makemigrations to confirm you are connected to the external database
+
+```sh
+python3 manage.py makemigrations --dry-run
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases.
+```
+
+So I assume that should just be 'python'.  But I see the comment added to the if 'DEV' block, so that's good.  Remove that and move on.
+
+Migrate your database models to your new database
+
+```py
+python3 manage.py migrate
+```
+
+Create a superuser for your new database
+
+```py
+python3 manage.py createsuperuser
+```
+
+Again, I will use 'python' and not 'python3' here.
+
+```sh
+$ python manage.py migrate
+Operations to perform:
+  Apply all migrations: account, admin, auth, authtoken, comments, contenttypes, followers, likes, posts, profiles, sessions, sites, socialaccount
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying account.0001_initial... OK
+  Applying account.0002_email_max_length... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying authtoken.0001_initial... OK
+  Applying authtoken.0002_auto_20160226_1747... OK
+  Applying authtoken.0003_tokenproxy... OK
+  Applying posts.0001_initial... OK
+  Applying posts.0002_post_image_filter... OK
+  Applying comments.0001_initial... OK
+  Applying followers.0001_initial... OK
+  Applying likes.0001_initial... OK
+  Applying profiles.0001_initial... OK
+  Applying sessions.0001_initial... OK
+  Applying sites.0001_initial... OK
+  Applying sites.0002_alter_domain_unique... OK
+  Applying socialaccount.0001_initial... OK
+  Applying socialaccount.0002_token_max_lengths... OK
+  Applying socialaccount.0003_extra_data_default_dict... OK
+  ```
+
+### confirm that the data in your database on ElephantSQL has been created
 
 1. On the ElephantSQL page for your database, in the left side navigation, select “BROWSER”
 2. Click the Table queries button, select auth_user
 
-### prepare your project for deployment to Heroku
+This worked for me the second time.
+
+### prepare the project for deployment to Heroku
 
 This includes
 
