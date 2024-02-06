@@ -1033,7 +1033,25 @@ In the comments/views.py file, it's a lot easier.
 
 In order to to get all the comments associated with a given post, we only need posts.
 
-## JWT (legacy from the der-api repo)
+## a note on pip vs pip3
+
+It's using pip3.  We have used pip all along so far.  Is this what caused the problem with all auth last time?
+
+Your pip is a soft link to the same executable file path with pip3. you can use the commands below to check where your pip and pip3 real paths are:
+
+```sh
+$ ls -l `which pip`
+$ ls -l `which pip3`
+```
+
+You may also use the commands below to know more details:
+
+```sh
+$ pip show pip
+$ pip3 show pip
+```
+
+## JWTs
 
 I have bunched the changes for installing and configuring JWTs in this section.
 
@@ -1041,11 +1059,24 @@ Instead of the command pip3 install dj-rest-auth, use dj-rest-auth==2.1.9:
 
 ```shell
 pip3 install dj-rest-auth==2.1.9
+```
+
+```sh
+python manage.py migrate
+python manage.py makemigrations
+```
+
+```sh
 pip install 'dj-rest-auth[with-social]'
+...
+WARNING: dj-rest-auth 2.1.9 does not provide the extra 'with-social'
+```
+
+```sh
 pip install djangorestframework-simplejwt
 ```
 
-Much of this section is following [the installation instructions](https://dj-rest-auth.readthedocs.io/en/latest/installation.html) for dj-rest-auth.  JWTs allow the server to be stateless, which is a big part of a rest framework.
+Much of this section is following [the installation instructions](https://dj-rest-auth.readthedocs.io/en/latest/installation.html) for dj-rest-auth.  JWTs allow the server to be stateless, which is a big part of a REST framework.
 
 ```py
 INSTALLED_APPS = [
@@ -1072,7 +1103,49 @@ urlpatterns = [
 ]
 ```
 
-Create drf_api/serializers.py
+We will still use session authentication in development and for Production use Tokens.
+
+To make this distinction, set  ```os.environ['DEV'] = '1'``` in the env.py file.
+
+Next, use this value to check whether we’re in Development or Production, and authenticate using sessions or tokens respectively.
+
+To enable token authentication, set REST_USE_JWT to True.
+
+To make sure they’re sent over HTTPS only set JWT_AUTH_SECURE to True.
+
+Declare the cookie names for the access and refresh tokens since we both.
+
+## The problem with allauth again
+
+```sh
+$ python manage.py migrate
+Traceback (most recent call last):
+  File "C:\Users\timof\repos\timo\drf-two\manage.py", line 22, in <module>
+    main()
+  File "C:\Users\timof\repos\timo\drf-two\manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\management\__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\management\__init__.py", line 395, in execute
+    django.setup()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\__init__.py", line 24, in setup
+    apps.populate(settings.INSTALLED_APPS)
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\apps\registry.py", line 122, in populate
+    app_config.ready()
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\allauth\account\apps.py", line 17, in ready
+    raise ImproperlyConfigured(
+django.core.exceptions.ImproperlyConfigured: allauth.account.middleware.AccountMiddleware must be added to settings.MIDDLEWARE
+```
+
+OK, OK, I will add that.  It's not in the [official source](https://github.com/Code-Institute-Solutions/drf-api/blob/c637122d1a559139cabf1d39b0a3281814091d79/drf_api/settings.py) but have to sort this out.  Its a few years old.
+
+Next issue:
+
+```sh
+ModuleNotFoundError: No module named 'drf_two.serializers'
+```
+
+Create drf_two/serializers.py
 
 Paste the code from the docs:
 
@@ -1090,6 +1163,8 @@ class CurrentUserSerializer(UserDetailsSerializer):
         )
 ```
 
+### Fixing the allauth errors
+
 Run migrations:
 
 ```shell
@@ -1098,182 +1173,438 @@ python manage.py migrate
 ModuleNotFoundError: No module named 'allauth'
 ```
 
-For some reason there is no transcript on this video, so I can't search for allauth in that.
-
-The lib is shown in the [GitHub repo linked to](https://github.com/Code-Institute-Solutions/drf-api/tree/c637122d1a559139cabf1d39b0a3281814091d79).
-
-'allauth' is shown in the settings.py after running this command: pip install 'dj-rest-auth[with-social]'
-
-In docs linked to, it says:
-
-### Registration (optional)
-
-1. *If you want to enable standard registration process you will need to install django-allauth by using pip install 'dj-rest-auth[with_social]'.*
-2. *Add django.contrib.sites, allauth, allauth.account, allauth.socialaccount and dj_rest_auth.registration apps to INSTALLED_APPS in your django settings.py:*
-3. *Add SITE_ID = 1 to your django settings.py*
-
-All of this looks good.  So how to fix that error?
+Trying to install that and I get this on migrate:
 
 ```sh
-pip install django-allauth
-```
-
-However, I still see this migration error:
-
-```sh
-$ python manage.py migrate
-...
 ImportError: allauth needs to be added to INSTALLED_APPS.
 ```
 
-But the INSTALLED_APPS looks good to me:
-
-```py
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'cloudinary_storage',
-    'django.contrib.staticfiles',
-    'cloudinary',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'dj_rest_auth',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'dj_rest_auth.registration',
-
-    'profiles',
-]
-```
-
-Running the server, there are a few dependencies that need installing:
+A [StackOverflow answer](https://stackoverflow.com/questions/76969410/importerror-allauth-needs-to-be-added-to-installed-apps) says to use this version:
 
 ```sh
-pip install django-filter
-pip install django-cors-headers
+pip install django-allauth==0.54.0
 ```
 
-Then this:
+Then I see this error when running the server:
 
 ```sh
-> python manage.py runserver     
+PS C:\Users\timof\repos\timo\drf-two> python manage.py runserver             
 Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+February 03, 2024 - 15:45:08
+Django version 3.2, using settings 'drf_two.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
 Exception in thread django-main-thread:
+Traceback (most recent call last):
+...
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'allauth.account.middleware'
+
+The above exception was the direct cause of the following exception:
+
 Traceback (most recent call last):
   File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
     self.run()
   ...
-    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
-django.core.exceptions.ImproperlyConfigured: The SECRET_KEY setting must not be empty.
+  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\django\core\servers\basehttp.py", line 47, in get_internal_wsgi_application
+    raise ImproperlyConfigured(
+django.core.exceptions.ImproperlyConfigured: WSGI application 'drf_two.wsgi.application' could not be loaded; Error importing module.
 ```
 
-The settings.py file has this:
+I panicked for a second and thought my name was the issue: 'drf_two' and not 'drf_api', but I searched for the first error *No module named 'allauth.account.middleware'* and found this [StackOverlow](https://stackoverflow.com/questions/77012106/django-allauth-modulenotfounderror-no-module-named-allauth-account-middlewar) which solved the action and we are back in business.
+
+*The middleware is only present in the unreleased 0.56.0-dev, likely you are using 0.55.2 and following 0.56 documentation.
+*The culprit is the Middleware entry.*
 
 ```py
-SECRET_KEY = 'your_secret_key_value'
+"allauth.account.middleware.AccountMiddleware", # remove this
 ```
 
-I generated a key like this:
-
-```py
-import secrets
-
-SECRET_KEY = secrets.token_hex(50)
-```
-
-Then, moved the key into the env.py file.
+Lastly, update the deps:
 
 ```sh
-> python manage.py runserver     
-Watching for file changes with StatReloader
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
-    self.run()
-...
-    raise ImproperlyConfigured(
-django.core.exceptions.ImproperlyConfigured: allauth.account.middleware.AccountMiddleware must be added to settings.MIDDLEWARE
+pip freeze > requirements.txt
 ```
 
-Here are the apps and middleware in settings.py:
+## Preparing the API for deployment
+
+In order to prepare our API for deployment here are some extra tasks.
+
+- add the root route to our API
+- add pagination to all ListViews
+- add a default JSON renderer for production
+- add [date time formatting](https://www.django-rest-framework.org/api-guide/settings/#date-and-time-formatting) for all the  created_at and updated_at fields
+- create a Db to be used when the app is deployed
+
+### Create a database
+
+Instructions to [set up an account with ElephantSQL.com.](https://code-institute-students.github.io/deployment-docs/02-elephantsql/elephantsql-01-sign-up)
+
+[ElephantSQL.com](https://www.elephantsql.com/)
+
+```txt
+Instance name: DRF Two Team
+Account type: Tiny Turtle
+Total: Free
+Name: drf-two
+Provider: Amazon Web Services
+Region: AP-NorthEast-1 (Tokyo)
+```
+
+### Create a Heroku app
+
+The process to create a new app on Heroku is documented on their site.
+
+- log into the Heroku Dashboard
+- click "New" and "Create new app"
+- name the app and select the region
+- in Settings tab add a Config Var DATABASE_URL with the database URL from ElephantSQL value
+
+When trying to add a Config Var DATABASE_URL in Heroku with the value of my database URL from ElephantSQL, I got this error: *item could not be updated: Unknown error*
+
+In the console I saw this:
+
+```txt
+state-machine.js:24 
+       GET https://kolkrabbi.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/github 404 
+Access to XMLHttpRequest at 'https://api.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/config-vars' from origin 'https://dashboard.heroku.com' has been blocked by CORS policy: Method PATCH is not allowed by Access-Control-Allow-Methods in preflight response.
+state-machine.js:24             
+   PATCH https://api.heroku.com/apps/bc714071-7dd3-45de-bc6d-a43b63fe0000/config-vars net::ERR_FAILED
+(anonymous) @ state-machine.js:24
+g @ chunk.5.9f71834c517a7a7113bd.js:96
+scheduleTask @ chunk.5.9f71834c517a7a7113bd.js:13
+…
+```
+
+Searching in the Heroku docs for that error, I saw a recommendation to clear the browser cache, use incognito mode or use a different browser.  So I fired up Edge and that worked to set the config variable.
+
+### Project preparation for your IDE
+
+In the terminal, install dj_database_url and psycopg2, both of these are needed to connect to your external database
+
+```sh
+pip3 install dj_database_url==0.5.0 psycopg2
+```
+
+In your settings.py file, import dj_database_url underneath the import for os
 
 ```py
+import os
+import dj_database_url
+```
+
+Currently, in the settings.py file we have this:
+
+```py
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+```
+
+Step 3: The instructions say to update the "database section" to this:
+
+```py
+ if 'DEV' in os.environ:
+     DATABASES = {
+         'default': {
+             'ENGINE': 'django.db.backends.sqlite3',
+             'NAME': BASE_DIR / 'db.sqlite3',
+         }
+     }
+ else:
+     DATABASES = {
+         'default': dj_database_url.parse(os.environ.get("DATABASE_URL"))
+     }
+```
+
+To confirm this location I looked at [the complete moments source code](https://github.com/Code-Institute-Solutions/drf-api/blob/master/drf_api/settings.py) and saw this:
+
+```py
+DATABASES = {
+    'default': ({
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    } if 'DEV' in os.environ else dj_database_url.parse(
+        os.environ.get('DATABASE_URL')
+    ))
+}
+```
+
+So I'm not sure why those are different.
+
+Moving on, add the Db url to the env.py file:
+
+```py
+os.environ['DATABASE_URL'] = "<your PostgreSQL URL here>"
+```
+
+Step 5: *Temporarily comment out the DEV environment variable so that your IDE can connect to your external database*
+
+That's also in the env.py file, although this detail is left out.
+
+Step 7: In the terminal, -–dry-run your makemigrations to confirm you are connected to the external database
+
+```sh
+python3 manage.py makemigrations --dry-run
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases.
+```
+
+So I assume that should just be 'python'.  But I see the comment added to the if 'DEV' block, so that's good.  Remove that and move on.
+
+Migrate your database models to your new database
+
+```py
+python3 manage.py migrate
+```
+
+Create a superuser for your new database
+
+```py
+python3 manage.py createsuperuser
+```
+
+Again, I will use 'python' and not 'python3' here.
+
+```sh
+$ python manage.py migrate
+Operations to perform:
+  Apply all migrations: account, admin, auth, authtoken, comments, contenttypes, followers, likes, posts, profiles, sessions, sites, socialaccount
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying account.0001_initial... OK
+  Applying account.0002_email_max_length... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying authtoken.0001_initial... OK
+  Applying authtoken.0002_auto_20160226_1747... OK
+  Applying authtoken.0003_tokenproxy... OK
+  Applying posts.0001_initial... OK
+  Applying posts.0002_post_image_filter... OK
+  Applying comments.0001_initial... OK
+  Applying followers.0001_initial... OK
+  Applying likes.0001_initial... OK
+  Applying profiles.0001_initial... OK
+  Applying sessions.0001_initial... OK
+  Applying sites.0001_initial... OK
+  Applying sites.0002_alter_domain_unique... OK
+  Applying socialaccount.0001_initial... OK
+  Applying socialaccount.0002_token_max_lengths... OK
+  Applying socialaccount.0003_extra_data_default_dict... OK
+  ```
+
+### confirm that the data in your database on ElephantSQL has been created
+
+1. On the ElephantSQL page for your database, in the left side navigation, select “BROWSER”
+2. Click the Table queries button, select auth_user
+
+This worked for me the second time.
+
+### prepare the project for deployment to Heroku
+
+This includes
+
+- installing a package needed to run the project on Heroku
+- fixing a few environment variables
+- creating a Procfile file that will provide the commands to Heroku to build and run the project
+
+In the terminal of your IDE workspace, install gunicorn
+
+```sh
+pip3 install gunicorn django-cors-headers
+```
+
+Update your requirements.txt
+
+```sh
+pip freeze --local > requirements.txt
+```
+
+Create a Procfile file required by Heroku.
+
+Remember, it must be named correctly and not have any file extension, otherwise Heroku won’t recognise it
+
+Inside the Procfile, add these two commands
+
+```sh
+release: python manage.py makemigrations && python manage.py migrate
+web: gunicorn drf_two.wsgi
+```
+
+In settings.py file, update the value of the ALLOWED_HOSTS variable to include your Heroku app’s URL
+
+ALLOWED_HOSTS = ['localhost', '<your_app_name>.herokuapp.com']
+
+Add corsheaders to INSTALLED_APPS
+
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'cloudinary_storage',
-    'django.contrib.staticfiles',
-    'cloudinary',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'dj_rest_auth',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
+    ...
     'dj_rest_auth.registration',
+    'corsheaders',
+    ...
+ ]
 
-    'profiles',
+Add corsheaders middleware to the TOP of the MIDDLEWARE
+
+ SITE_ID = 1
+ MIDDLEWARE = [
+     'corsheaders.middleware.CorsMiddleware',
+     ...
+ ]
+
+Under the MIDDLEWARE list, set the ALLOWED_ORIGINS for the network requests made to the server with the following code:
+
+if 'CLIENT_ORIGIN' in os.environ:
+     CORS_ALLOWED_ORIGINS = [
+         os.environ.get('CLIENT_ORIGIN')
+     ]
+else:
+     CORS_ALLOWED_ORIGIN_REGEXES = [
+         r"^https://.*\.gitpod\.io$",
+     ]
+
+Here the allowed origins are set for the network requests made to the server. The API will use the CLIENT_ORIGIN variable, which is the front end app's url. We haven't deployed that project yet, but that's ok. If the variable is not present, that means the project is still in development, so then the regular expression in the else statement will allow requests that are coming from your IDE.
+
+Enable sending cookies in cross-origin requests so that users can get authentication functionality
+
+else:
+     CORS_ALLOWED_ORIGIN_REGEXES = [
+         r"^https://.*\.gitpod\.io$",
+     ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+To be able to have the front end app and the API deployed to different platforms, set the JWT_AUTH_SAMESITE attribute to 'None'. Without this the cookies would be blocked
+
+JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_REFRESH_COOKE = 'my-refresh-token'
+JWT_AUTH_SAMESITE = 'None'
+
+Remove the value for SECRET_KEY and replace with the following code to use an environment variable instead
+
+# SECURITY WARNING: keep the secret key used in production secret!
+
+SECRET_KEY = os.getenv('SECRET_KEY')
+
+Set a NEW value for your SECRET_KEY environment variable in env.py, do NOT use the same one that has been published to GitHub in your commits
+
+os.environ.setdefault("SECRET_KEY", "CreateANEWRandomValueHere")
+
+Set the DEBUG value to be True only if the DEV environment variable exists. This will mean it is True in development, and False in production
+
+DEBUG = 'DEV' in os.environ
+
+Comment DEV back in env.py
+
+import os
+
+ os.environ['CLOUDINARY_URL'] = "cloudinary://..."
+ os.environ['SECRET_KEY'] = "Z7o..."
+ os.environ['DEV'] = '1'
+ os.environ['DATABASE_URL'] = "postgres://..."
+Ensure the project requirements.txt file is up to date. In the IDE terminal of your DRF API project enter the following
+
+pip freeze --local > requirements.txt
+
+Add, commit and push to GitHub.
+
+### Heroku deployment
+
+On the Heroku dashboard for your new app, open the Settings tab and add two more Config Vars:
+
+SECRET_KEY (you can make one up, but don’t use the one that was originally in the settings.py file!)
+CLOUDINARY_URL, and for the value, copy in your Cloudinary URL from your env.py file (do not add quotation marks!)
+
+Open the Deploy tab
+
+the deploy tab selected on a heroku app
+
+In the Deployment method section, select Connect to GitHub
+
+Search for your repo and click Connect
+
+Optional: You can click Enable Automatic Deploys in case you make any further changes to the project. This will trigger any time code is pushed to your GitHub repository
+
+As we already have all our changes pushed to GitHub, we will use the Manual deploy section and click Deploy Branch. This will start the build process. When finished, it should look something like this
+
+a log showing a successful build with a button to view the app below
+
+Your app should be up and running now, so click the Open app button
+
+Check that your program has deployed, you should see the JSON welcome message from the home screen.
+
+a deployed site with a JSON object containing a welcome message
+
+You can also check the profile for the superuser you created by adding /profiles/ to your root URL
+
+a deployed site with a JSON object containing a profile
+
+### dj-rest-auth Bug Fix
+
+Problem Statement
+It turns out that dj-rest-auth has a bug that doesn’t allow users to log out (ref: DRF Rest Auth Issues).
+
+The issue is that the samesite attribute we set to ‘None’ in settings.py (JWT_AUTH_SAMESITE = 'None') is not passed to the logout view. This means that we can’t log out, but must wait for the refresh token to expire instead.
+
+Proposed Solution
+One way to fix this issue is to have our own logout view, where we set both cookies to an empty string and pass additional attributes like secure, httponly and samesite, which was left out by mistake by the library.
+
+Follow the steps below to fix this bug
+
+Step 1: (views.py Repo Link)
+1. In drf_api/views.py, import JWT_AUTH settings from settings.py.
+
+2. Write a logout view. Looks like quite a bit, but all that’s happening here is that we’re setting the value of both the access token (JWT_AUTH_COOKIE) and refresh token (JWT_AUTH_REFRESH_COOKIE) to empty strings. We also pass samesite=JWT_AUTH_SAMESITE, which we set to ’None’ in settings.py and make sure the cookies are httponly and sent over HTTPS,
+
+Step 2: (urls.py Repo Link)
+3. Now that the logout view is there, it has to be included in drf_api/urls.py . The logout_route also needs to be imported,
+
+4. ... and then included in the urlpatterns list. The important thing to note here is that our logout_route has to be placed above the default dj-rest-auth urls, so that it is matched first.
+
+5. Push your code to GitHub.
+
+6. Return to Heroku, in the Deploy tab, Manually Deploy your code again.dj-rest-auth Bug Fix
+ Bookmark this page
+
+### One last thing
+
+In order to use this API with the upcoming Advanced React walkthrough project, we’d like to ask you to add two environment variables in the SETTINGS.py file.
+
+ALLOWED_HOST, so that it’s not hardcoded and you could spin up multiple API instances, as they would all be deployed to different URLs.
+
+In settings.py, in the ALLOWED_HOSTS list, copy your ‘... .herokuapp.com’ string.
+ALLOWED_HOSTS = [
+    '... .herokuapp.com',
+    'localhost',
 ]
-
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+Log in to heroku.com and select your API application.
+Click “settings”
+Click “Reveal config vars”
+Add the new key of ALLOWED_HOST with the value for your deployed Heroku application URL that we copied from settings.py
+Back in settings.py, replace your ALLOWED HOSTS list '... .herokuapp.com' string we just copied with the ALLOWED_HOST environment variable.
+ALLOWED_HOSTS = [
+   os.environ.get('ALLOWED_HOST'),
+   'localhost',
 ]
-```
-
-As you can see, allauth is in both.  I can see from the [completed settings file](https://github.com/Code-Institute-Solutions/drf-api/blob/master/drf_api/settings.py) that my version matches what I have.
-
-I have a [branch](https://github.com/timofeysie/drf-api/commit/cc77b2a2eed50ca5ba2040df742bf9e8150f7112) with the jump ahead code.  There is still the env.py file:
-
-## Back to work
-
-After trying to jump ahead to give an attempt at just running the whole thing, I ran into issues described above with allauth.
-
-However, when going back to where I was in the tutorial before I jumped ahead and stashing the jump ahead work in a different branch, I am still getting allauth errors.
-
-```py
-> python manage.py runserver
-Watching for file changes with StatReloader
-Performing system checks...
-
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\dj_rest_auth\registration\serializers.py", line 17, in <module>
-    from allauth.utils import email_address_exists, get_username_max_length
-ImportError: cannot import name 'email_address_exists' from 'allauth.utils' (C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\site-packages\allauth\utils.py)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "C:\Users\timof\AppData\Local\Programs\Python\Python310\lib\threading.py", line 1016, in _bootstrap_inner
-    self.run()
- ...
-ImportError: allauth needs to be added to INSTALLED_APPS.
-```
-
-I have tried to roll everything back to the place where I was the complete profiles section before the "Post Serializer Challenge" section.
-
-So I have used only the INSTALLED_APPS and MIDDLEWARE strings from the last profiles step.
-
-I deleted the __pycache__ directory, as that might still have a trace of allauth in it.
-
-However, I still see the error: RuntimeError: Model class allauth.account.models.EmailAddress doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS.
-
 
 ## Useful links
 
