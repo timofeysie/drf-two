@@ -1,2 +1,2 @@
 release: python manage.py makemigrations && python manage.py migrate
-web: gunicorn drf_two.wsgiaq
+web: gunicorn drf_two.wsgi

@@ -1642,9 +1642,57 @@ Not so fast.  This is what I saw in the log:
        https://devcenter.heroku.com/articles/django-assets
  !     Push rejected, failed to compile Python app.
  !     Push failed
- ```
+```
 
-Your app should be up and running now, so click the Open app button
+OK, so set default secret key was the issue.  Revert this change:
+
+```py
+SECRET_KEY = os.getenv('SECRET_KEY')
+```
+
+to this:
+
+```py
+os.environ.setdefault("SECRET_KEY", "RandomValueHere")
+```
+
+The the build works and completes.  The app should be deployed, but when opening it, I see this:
+
+```txt
+Application error
+An error occurred in the application and your page could not be served. If you are the application owner, check your logs for details. You can do this from the Heroku CLI with the command
+heroku logs --tail
+```
+
+The logs on the side say:
+
+```txt
+2024-02-06T03:10:31.220450+00:00 app[web.1]: [2024-02-06 03:10:31 +0000] [7] [INFO] Worker exiting (pid: 7)
+2024-02-06T03:10:31.239434+00:00 app[web.1]: [2024-02-06 03:10:31 +0000] [2] [ERROR] Worker (pid:7) exited with code 3
+2024-02-06T03:10:31.239787+00:00 app[web.1]: [2024-02-06 03:10:31 +0000] [2] [ERROR] Shutting down: Master
+2024-02-06T03:10:31.239823+00:00 app[web.1]: [2024-02-06 03:10:31 +0000] [2] [ERROR] Reason: Worker failed to boot.
+2024-02-06T03:10:31.321951+00:00 heroku[web.1]: Process exited with status 3
+2024-02-06T03:10:31.349590+00:00 heroku[web.1]: State changed from starting to crashed
+2024-02-06T03:10:33.487389+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/" host=drf-two-eb17ecbff99f.herokuapp.com request_id=b736c7b1-7df4-413e-9486-f301e8bce1ec fwd="175.124.241.131" dyno= connect= service= status=503 bytes= protocol=https
+2024-02-06T03:10:34.275102+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/favicon.ico" host=drf-two-eb17ecbff99f.herokuapp.com request_id=570d6d21-ec92-4dd5-90ac-0929aa5a61c4 fwd="175.124.241.131" dyno= connect= service= status=503 bytes= protocol=https
+2024-02-06T03:10:43.212347+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/" host=drf-two-eb17ecbff99f.herokuapp.com request_id=fea40e0b-b52e-4097-892d-4d3242fd6bf5 fwd="175.124.241.131" dyno= connect= service= status=503 bytes= protocol=https
+2024-02-06T03:10:43.709349+00:00 heroku[router]: at=error code=H10 desc="App crashed" method=GET path="/favicon.ico" host=drf-two-eb17ecbff99f.herokuapp.com request_id=8b43f7ba-5bb1-4d72-899d-5b822f2bf692 fwd="175.124.241.131" dyno= connect= service= status=503 bytes= protocol=https
+```
+
+According to StackOverflow it's the procfile.  Form experience with Heroku, I also have seen that exited with code 3 before when deploying node apps.
+
+Our procfile:
+
+```py
+release: python manage.py makemigrations && python manage.py migrate
+web: gunicorn drf_two.wsgiaq
+```
+
+I notice that the procfile of another project has this:
+
+```py
+web: gunicorn lesson_plan_backend.wsgi
+```
 
 Check that your program has deployed, you should see the JSON welcome message from the home screen.
 
