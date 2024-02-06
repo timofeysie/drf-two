@@ -1694,6 +1694,29 @@ I notice that the procfile of another project has this:
 web: gunicorn lesson_plan_backend.wsgi
 ```
 
+That must have been a type error on my part, as the instructions above show wsgi, not wsgiaq.
+
+Making this change, I see this:
+
+```txt
+https://drf-two-eb17ecbff99f.herokuapp.com/
+Request Method: GET
+Status Code: 400 Bad Request (from disk cache)
+Remote Address:
+```
+
+Again, according to StackOverflow, this is an allowed hosts issue:
+
+We currently have this:
+
+```py
+ALLOWED_HOSTS = ['localhost', 'drf-two.herokuapp.com']
+```
+
+But our url is: drf-two-eb17ecbff99f.herokuapp.com
+
+So add that and try again.
+
 Check that your program has deployed, you should see the JSON welcome message from the home screen.
 
 a deployed site with a JSON object containing a welcome message
