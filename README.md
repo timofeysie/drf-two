@@ -1452,27 +1452,34 @@ web: gunicorn drf_two.wsgi
 
 In settings.py file, update the value of the ALLOWED_HOSTS variable to include your Heroku app’s URL
 
+```py
 ALLOWED_HOSTS = ['localhost', '<your_app_name>.herokuapp.com']
+```
 
 Add corsheaders to INSTALLED_APPS
 
+```py
 INSTALLED_APPS = [
     ...
     'dj_rest_auth.registration',
     'corsheaders',
     ...
  ]
+```
 
 Add corsheaders middleware to the TOP of the MIDDLEWARE
 
+```py
  SITE_ID = 1
  MIDDLEWARE = [
      'corsheaders.middleware.CorsMiddleware',
      ...
  ]
+```
 
 Under the MIDDLEWARE list, set the ALLOWED_ORIGINS for the network requests made to the server with the following code:
 
+```py
 if 'CLIENT_ORIGIN' in os.environ:
      CORS_ALLOWED_ORIGINS = [
          os.environ.get('CLIENT_ORIGIN')
@@ -1481,58 +1488,132 @@ else:
      CORS_ALLOWED_ORIGIN_REGEXES = [
          r"^https://.*\.gitpod\.io$",
      ]
+```
 
 Here the allowed origins are set for the network requests made to the server. The API will use the CLIENT_ORIGIN variable, which is the front end app's url. We haven't deployed that project yet, but that's ok. If the variable is not present, that means the project is still in development, so then the regular expression in the else statement will allow requests that are coming from your IDE.
 
 Enable sending cookies in cross-origin requests so that users can get authentication functionality
 
+```py
 else:
      CORS_ALLOWED_ORIGIN_REGEXES = [
          r"^https://.*\.gitpod\.io$",
      ]
 
 CORS_ALLOW_CREDENTIALS = True
+```
 
 To be able to have the front end app and the API deployed to different platforms, set the JWT_AUTH_SAMESITE attribute to 'None'. Without this the cookies would be blocked
 
+```py
 JWT_AUTH_COOKIE = 'my-app-auth'
 JWT_AUTH_REFRESH_COOKE = 'my-refresh-token'
 JWT_AUTH_SAMESITE = 'None'
+```
 
 Remove the value for SECRET_KEY and replace with the following code to use an environment variable instead
 
-# SECURITY WARNING: keep the secret key used in production secret!
-
+```py
+# SECURITY WARNING: keep the secret key used in production secret
 SECRET_KEY = os.getenv('SECRET_KEY')
+```
 
 Set a NEW value for your SECRET_KEY environment variable in env.py, do NOT use the same one that has been published to GitHub in your commits
 
-os.environ.setdefault("SECRET_KEY", "CreateANEWRandomValueHere")
+```py
+os.environ.setdefault("SECRET_KEY", "RandomValueHere")
+```
 
 Set the DEBUG value to be True only if the DEV environment variable exists. This will mean it is True in development, and False in production
 
+```py
 DEBUG = 'DEV' in os.environ
+```
 
 Comment DEV back in env.py
 
+```py
 import os
 
- os.environ['CLOUDINARY_URL'] = "cloudinary://..."
- os.environ['SECRET_KEY'] = "Z7o..."
- os.environ['DEV'] = '1'
- os.environ['DATABASE_URL'] = "postgres://..."
+os.environ['CLOUDINARY_URL'] = "cloudinary://..."
+os.environ['SECRET_KEY'] = "Z7o..."
+os.environ['DEV'] = '1'
+os.environ['DATABASE_URL'] = "postgres://..."
+```
+
 Ensure the project requirements.txt file is up to date. In the IDE terminal of your DRF API project enter the following
 
+```sh
 pip freeze --local > requirements.txt
+```
 
 Add, commit and push to GitHub.
 
-### Heroku deployment
+I had some issues here as I was on the develop branch, and I then needed to merge with main, which caused this crisis:
+
+```sh
+$ git pull
+remote: Enumerating objects: 1, done.
+remote: Counting objects: 100% (1/1), done.
+remote: Total 1 (delta 0), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (1/1), 898 bytes | 299.00 KiB/s, done.
+From https://github.com/timofeysie/drf-two
+   a415495..82ab13e  main       -> origin/main
+Unlink of file 'db.sqlite3' failed. Should I try again? (y/n) n
+error: unable to unlink old 'db.sqlite3': Invalid argument
+Updating files: 100% (9/9), done.
+Updating a415495..82ab13e
+
+
+$ git status
+On branch main
+Your branch is behind 'origin/main' by 5 commits, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   README.md
+        modified:   comments/serializers.py
+        modified:   drf_two/settings.py
+        modified:   drf_two/urls.py
+        modified:   requirements.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        Procfile
+        drf_two/serializers.py
+        drf_two/views.py
+
+$ git push
+To https://github.com/timofeysie/drf-two.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/timofeysie/drf-two.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+timof@BOOK-ANH52UMLGO MINGW64 ~/repos/timo/drf-two (main)
+$ git pull
+Merge made by the 'ort' strategy.
+ db.sqlite3 | Bin 196608 -> 299008 bytes
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ ```
+
+## Heroku deployment
 
 On the Heroku dashboard for your new app, open the Settings tab and add two more Config Vars:
 
 SECRET_KEY (you can make one up, but don’t use the one that was originally in the settings.py file!)
+
 CLOUDINARY_URL, and for the value, copy in your Cloudinary URL from your env.py file (do not add quotation marks!)
+
+I also see this one in the screenshot, do I need it?
+
+```py
+os.environ['DISABLE_COLLECTSTATIC'] = '1'
+```
 
 Open the Deploy tab
 
@@ -1547,6 +1628,21 @@ Optional: You can click Enable Automatic Deploys in case you make any further ch
 As we already have all our changes pushed to GitHub, we will use the Manual deploy section and click Deploy Branch. This will start the build process. When finished, it should look something like this
 
 a log showing a successful build with a button to view the app below
+
+Not so fast.  This is what I saw in the log:
+
+```sh
+           raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
+       django.core.exceptions.ImproperlyConfigured: The SECRET_KEY setting must not be empty.
+ !     Error while running '$ python manage.py collectstatic --noinput'.
+       See traceback above for details.
+       You may need to update application code to resolve this error.
+       Or, you can disable collectstatic for this application:
+          $ heroku config:set DISABLE_COLLECTSTATIC=1
+       https://devcenter.heroku.com/articles/django-assets
+ !     Push rejected, failed to compile Python app.
+ !     Push failed
+ ```
 
 Your app should be up and running now, so click the Open app button
 
