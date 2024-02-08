@@ -1715,20 +1715,17 @@ ALLOWED_HOSTS = ['localhost', 'drf-two.herokuapp.com']
 
 But our url is: drf-two-eb17ecbff99f.herokuapp.com
 
-So add that and try again.
+So add that and try again.  Adding that to the array actuallay works!
 
-Check that your program has deployed, you should see the JSON welcome message from the home screen.
+Go to: https://drf-two-eb17ecbff99f.herokuapp.com/
 
-a deployed site with a JSON object containing a welcome message
+We see the JSON welcome message from the home screen.
 
-You can also check the profile for the superuser you created by adding /profiles/ to your root URL
-
-a deployed site with a JSON object containing a profile
+The profiles link also shows a JSON object containing a profile
 
 ### dj-rest-auth Bug Fix
 
-Problem Statement
-It turns out that dj-rest-auth has a bug that doesn’t allow users to log out (ref: DRF Rest Auth Issues).
+Apparently dj-rest-auth has a bug that doesn’t allow users to log out (ref: DRF Rest Auth Issues).
 
 The issue is that the samesite attribute we set to ‘None’ in settings.py (JWT_AUTH_SAMESITE = 'None') is not passed to the logout view. This means that we can’t log out, but must wait for the refresh token to expire instead.
 
@@ -1738,6 +1735,7 @@ One way to fix this issue is to have our own logout view, where we set both cook
 Follow the steps below to fix this bug
 
 Step 1: (views.py Repo Link)
+
 1. In drf_api/views.py, import JWT_AUTH settings from settings.py.
 
 2. Write a logout view. Looks like quite a bit, but all that’s happening here is that we’re setting the value of both the access token (JWT_AUTH_COOKIE) and refresh token (JWT_AUTH_REFRESH_COOKIE) to empty strings. We also pass samesite=JWT_AUTH_SAMESITE, which we set to ’None’ in settings.py and make sure the cookies are httponly and sent over HTTPS,
