@@ -113,6 +113,7 @@ else:
         'http://localhost:3000',
         'https://drf-two.herokuapp.com',
         'https://drf-two-eb17ecbff99f.herokuapp.com',
+        'https://dot-one-26b272efdbb8.herokuapp.com',
     ]
 
 CORS_ALLOW_CREDENTIALS = True

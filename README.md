@@ -1,6 +1,6 @@
 ![CI logo](https://codeinstitute.s3.amazonaws.com/fullstack/ci_logo_small.png)
 
-# Django Rest Framework API Two
+# DRF Two
 
 The DRF-API project is based on the [Code Institute Django REST Framework](https://github.com/Code-Institute-Org/ci-full-template) module.
 
