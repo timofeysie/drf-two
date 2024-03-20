@@ -103,14 +103,14 @@ INSTALLED_APPS = [
 
 ### The Profile Model
 
-Create our Profile model with a one-to-one field pointing to a User instance and store the images in the database.
+The Profile model is created with a one-to-one field pointing to a User instance and stores the images in the database.
 
-Create a Meta class that will return a Profile instances with most recently created is first.  
+A Meta class is created that will return a Profile instances where the most recently created is first.  
 
-In the dunder string method return  information about who the profile owner is.
+In the dunder string method returns information about who the profile owner is.
 
-To ensure that a  profile is created every time a user is created use signals notifications that get triggered when a  
-user is created.
+To ensure that a profile is created every time a user is created signal notifications that get triggered when a  
+user is created are used.
 
 ```py title=models.py
 from django.db import models
@@ -146,6 +146,23 @@ def create_profile(sender, instance, created, **kwargs):
 # Built-in Model signals include:  pre_save, post_save, pre_delete and post_delete.
 post_save.connect(create_profile, sender=User)
 ```
+
+What does the "f" in ```return f"{self.owner}'s profile"``` mean?  I have no idea.  Need to find out.  I didn't take the whole Python/DRF course, just the backend course so I probably missed that.
+
+A quick search shows that:
+
+*It's a type hint. Function f takes argument s of expected type string.*
+
+Open the [docs](https://docs.python.org/3/library/typing.html) linked to that message and search for "f" and it doesn't help.  I would have to read the whole thing which is not a bad idea, but not possible at the moment.
+
+That kind of answer is a kind of RTFM (Read the f***ing Manual) response which made StackOverflow such a game changer where instead of a link to docs, people competed for the best answer in a positive way.
+
+On another reddit thread, someone answered the questions: *Before f-strings we used the format function.* as well as providing a link with an anchor relating to the exact part of the long document where the detail is discussed: https://docs.python.org/3/library/stdtypes.html#str.format*
+
+```py
+str.format(*args, **kwargs)
+```
+
 
 Note the original file is [located in the moments repo](https://github.com/Code-Institute-Solutions/drf-api/blob/master/profiles/models.py).
 
@@ -495,7 +512,7 @@ urlpatterns = [
     ...
 ```
 
-The rest framework  come with a set of commonly used permissions such as:
+The rest framework comes with a set of commonly used permissions such as:
 
 - AllowAny
 - IsAuthenticated
