@@ -34,11 +34,11 @@ The Django Cloudinary storage library connects Django to a service that will hos
 
 The Pillow library adds image processing capabilities that needed for working with Cloudinary.
 
-Add the apps to the drf_api\settings.py file.  The app names need to be in this particular order
+Add the apps to the drf_two\settings.py file.  The app names need to be in this particular order
 
 with django.contrib.staticfiles between  cloudinary_storage and Cloudinary.
 
-drf_api\settings.py
+drf_two\settings.py
 
 ```py
 INSTALLED_APPS = [
@@ -65,7 +65,7 @@ Use the environment variable set in the env.py file to declare that value.
 Define a setting called MEDIA_URL, which is the standard Django folder to store media so the settings know where to put image files.
 Also set a DEFAULT_FILE_STORAGE variable.
 
-```py title="drf_api\settings.py"
+```py title="drf_two\settings.py"
 from pathlib import Path
 import os
 
@@ -163,10 +163,9 @@ On another reddit thread, someone answered the questions: *Before f-strings we u
 str.format(*args, **kwargs)
 ```
 
-
 Note the original file is [located in the moments repo](https://github.com/Code-Institute-Solutions/drf-api/blob/master/profiles/models.py).
 
-Register the Profile model in admin.py:2
+Register the Profile model in admin.py
 
 ```py
 from django.contrib import admin
@@ -260,7 +259,7 @@ urlpatterns = [
 
 Include profile urls in the main apps urls.py
 
-drf_api\urls.py
+drf_two\urls.py
 
 ```py
 from django.contrib import admin
@@ -503,7 +502,7 @@ Now a proper form appears.
 
 Here is [the repo for this part](https://github.com/Code-Institute-Solutions/drf-api/tree/025406b0a0fb365a1931747b596c33fd3ba2a6dc).
 
-Just adding this to: drf_api\urls.py automagically adds a login button in the framework webpage view.
+Just adding this to: drf_two\urls.py automagically adds a login button in the framework webpage view.
 
 ```py
 urlpatterns = [
@@ -1732,13 +1731,13 @@ ALLOWED_HOSTS = ['localhost', 'drf-two.herokuapp.com']
 
 But our url is: drf-two-eb17ecbff99f.herokuapp.com
 
-So add that and try again.  Adding that to the array actuallay works!
+So add that and try again.  Adding that to the array actually works!
 
 Go to: https://drf-two-eb17ecbff99f.herokuapp.com/
 
 We see the JSON welcome message from the home screen.
 
-The profiles link also shows a JSON object containing a profile
+The profiles link also shows a JSON object containing a profile.
 
 ### dj-rest-auth Bug Fix
 
@@ -1753,12 +1752,12 @@ Follow the steps below to fix this bug
 
 Step 1: (views.py Repo Link)
 
-1. In drf_api/views.py, import JWT_AUTH settings from settings.py.
+1. In drf_two/views.py, import JWT_AUTH settings from settings.py.
 
 2. Write a logout view. Looks like quite a bit, but all that’s happening here is that we’re setting the value of both the access token (JWT_AUTH_COOKIE) and refresh token (JWT_AUTH_REFRESH_COOKIE) to empty strings. We also pass samesite=JWT_AUTH_SAMESITE, which we set to ’None’ in settings.py and make sure the cookies are httponly and sent over HTTPS,
 
 Step 2: (urls.py Repo Link)
-3. Now that the logout view is there, it has to be included in drf_api/urls.py . The logout_route also needs to be imported,
+3. Now that the logout view is there, it has to be included in drf_two/urls.py . The logout_route also needs to be imported,
 
 4. ... and then included in the urlpatterns list. The important thing to note here is that our logout_route has to be placed above the default dj-rest-auth urls, so that it is matched first.
 
