@@ -62,15 +62,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = 'DEV' in os.environ
 
 CORS_ALLOWED_ORIGINS = [
-    '127.0.0.1',
-    'localhost',
-    'drf-two.herokuapp.com',
-    'drf-two-eb17ecbff99f.herokuapp.com',
+    'http://127.0.0.1',
+    'http://localhost',
+    'https://drf-two.herokuapp.com',
+    'https://drf-two-eb17ecbff99f.herokuapp.com',
     'http://localhost:3000',
     'http://dot-one-26b272efdbb8.herokuapp.com',
     'https://dot-one-26b272efdbb8.herokuapp.com',
 ]
-
 
 # Application definition
 
