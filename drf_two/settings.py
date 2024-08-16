@@ -109,6 +109,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'http://127.0.0.1',
+    'http://localhost',
+    'https://drf-two.herokuapp.com',
+    'https://drf-two-eb17ecbff99f.herokuapp.com',
+    'http://localhost:3000',
+    'http://dot-one-26b272efdbb8.herokuapp.com',
+    'https://dot-one-26b272efdbb8.herokuapp.com',
+]
+
 if 'CLIENT_ORIGIN' in os.environ:
     CORS_ALLOWED_ORIGINS.append(os.environ.get('CLIENT_ORIGIN'))
 
