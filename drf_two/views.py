@@ -5,5 +5,5 @@ from rest_framework.response import Response
 @api_view()
 def root_route(request):
     return Response({
-        "message": "You have reached the drf-two API"
+        "message": "You have reached the drf-two API v0.0.1"
     })

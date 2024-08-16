@@ -1443,7 +1443,7 @@ This includes
 - fixing a few environment variables
 - creating a Procfile file that will provide the commands to Heroku to build and run the project
 
-In the terminal of your IDE workspace, install gunicorn
+In the terminal install gunicorn
 
 ```sh
 pip3 install gunicorn django-cors-headers
