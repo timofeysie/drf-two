@@ -157,36 +157,8 @@ if 'DEV' in os.environ:
         }
     }
 else:
-    # Try DATABASE_URL first (Heroku default), then fall back to SUPABASE_URL
-    database_url = os.environ.get('DATABASE_URL') or os.environ.get('SUPABASE_URL')
-    
-    if database_url:
-        db_config = dj_database_url.parse(
-            database_url,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    else:
-        # Fallback to direct configuration
-        db_config = {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postgres',
-            'HOST': 'aws-0-ap-southeast-1.pooler.supabase.com',
-            'PORT': '5432',
-            'USER': 'postgres.ktbgflxciwrivdqvsonv',
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
-        }
-    
-    # Add the TCP keepalive parameters
-    db_config['OPTIONS'] = {
-        'keepalives': 1,
-        'keepalives_idle': 300,
-        'keepalives_interval': 300,
-        'keepalives_count': 5,
-    }
-    
     DATABASES = {
-        'default': db_config
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
     }
 
 
@@ -227,6 +199,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Cloudinary static files storage
+STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
