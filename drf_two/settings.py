@@ -157,12 +157,19 @@ if 'DEV' in os.environ:
         }
     }
 else:
-    # Use only SUPABASE_URL for production database
+    # Provide a default empty dict if parsing fails
     db_config = dj_database_url.parse(
-        os.environ.get('SUPABASE_URL', ''),
+        os.environ.get('SUPABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
-    )
+    ) or {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'aws-0-ap-southeast-1.pooler.supabase.com'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres.ktbgflxciwrivdqvsonv'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+    }
     
     # Add the TCP keepalive parameters
     db_config['OPTIONS'] = {
