@@ -158,10 +158,13 @@ if 'DEV' in os.environ:
     }
 else:
     # Use only SUPABASE_URL for production database
-    # Parse the database URL
-    db_config = dj_database_url.parse(os.environ.get("SUPABASE_URL"))
+    db_config = dj_database_url.parse(
+        os.environ.get('SUPABASE_URL', ''),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
     
-    # Add the TCP keepalive parameters recommended by Heroku
+    # Add the TCP keepalive parameters
     db_config['OPTIONS'] = {
         'keepalives': 1,
         'keepalives_idle': 300,
